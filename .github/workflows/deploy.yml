@@ -41,7 +41,7 @@ jobs:
             
             - name: GKE Configuration
               run: |
-                gcloud container clusters get-credentials $GKE_CLUSTERS --region $GKE_REGION --project $PROJECT_ID
+                gcloud container clusters get-credentials $GKE_CLUSTER --region $GKE_REGION --project $PROJECT_ID
 
             - name: Deploying to kubernetes
               run: |  #App will be deployed to kubernetes as soon as we run the below command, the 2nd line is connecting your image to deployment, means if you updated docker image in artifact registry then it will tell kubernetes not to use the previous image, use the updated image and deploy the updated image only
