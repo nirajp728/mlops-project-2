@@ -1,0 +1,49 @@
+name: CI/CD Deployment to GKE
+
+on: 
+    push:
+        branches:
+            - main
+
+env:
+    PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
+    GKE_CLUSTER: "my-cluster"
+    GKE_REGION: "us-central1"
+    DEPLOYMENT_NAME: "mlops-app"
+    REPOSITORY: "us-central1-docker.pkg.dev/scientific-air-428214-f7/my-repo"
+    IMAGE: "us-central1-docker.pkg.dev/scientific-air-428214-f7/my-repo/mlops-app" #The "mlops-app" here is not related to DEPLOYMENT_NAME but whatever name here is given the same needs to be changed in kubernetes-deployment.yaml file inside image key-value pair
+
+jobs: 
+    build-and-deploy:
+        runs-on: ubuntu-latest
+
+        container: 
+            image: google/cloud-sdk:latest
+
+        steps:
+            - name: Checkout Repository
+              uses: actions/checkout@v2 #This is pre defined basic checkout function that checksout code from github repository
+
+            - name: Authenticate with Google Cloud
+              uses: google-github-actions/auth@v2  #pre-defined , authenticates into gcloud
+              with:
+                credentials_json: ${{ secrets.GCP_SA_KEY }}
+
+            - name: Configure GCloud
+              run: |    #In gcp, we can have many projects, so to find out which project to access, we write the below command
+                gcloud config set project $PROJECT_ID
+                gcloud auth configure-docker us-central1-docker.pkg.dev
+            
+            - name: Building and Pushing Image
+              run: |   #The GITHUB_SHA helps in Docker image vesioning, Each commit into github has a GIT commit hash, this identifies the commit that triggered the CI/CD pipeline, its better to use this beacuse if we use latest inplace of $GITHUB_SHA then in the production can lead to unpredictable behaviour because you might pull a different image each time.
+                docker build -t $IMAGE:$GITHUB_SHA .  
+                docker push $IMAGE:$GITHUB_SHA
+            
+            - name: GKE Configuration
+              run: |
+                gcloud container clusters get-credentials $GKE_CLUSTERS --region $GKE_REGION --project $PROJECT_ID
+
+            - name: Deploying to kubernetes
+              run: |  #App will be deployed to kubernetes as soon as we run the below command, the 2nd line is connecting your image to deployment, means if you updated docker image in artifact registry then it will tell kubernetes not to use the previous image, use the updated image and deploy the updated image only
+                kubectl apply -f kubernetes-deployment.yaml
+                kubectl set image deployment/$DEPLOYMENT_NAME=$IMAGE:$GITHUB_SHA
