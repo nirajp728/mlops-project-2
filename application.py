@@ -6,20 +6,7 @@ from sklearn.dummy import DummyClassifier
 
 app = Flask(__name__)
 
-MODEL_PATH = "artifacts/models/model.pkl"
-
-# Ensure directory exists
-os.makedirs(os.path.dirname(MODEL_PATH), exist_ok=True)
-
-# Load model or create dummy if missing
-if os.path.exists(MODEL_PATH):
-    model = joblib.load(MODEL_PATH)
-else:
-    print("Warning: model.pkl not found. Using a dummy classifier.")
-    dummy_model = DummyClassifier(strategy="most_frequent")
-    dummy_model.fit([[0, 0, 0, 0]], [0])  # Dummy training
-    joblib.dump(dummy_model, MODEL_PATH)
-    model = dummy_model
+model = joblib.load("artifacts/models/model.pkl")
 
 @app.route('/', methods=['GET', 'POST'])
 def index():
