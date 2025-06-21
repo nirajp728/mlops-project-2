@@ -46,4 +46,4 @@ jobs:
             - name: Deploying to kubernetes
               run: |  #App will be deployed to kubernetes as soon as we run the below command, the 2nd line is connecting your image to deployment, means if you updated docker image in artifact registry then it will tell kubernetes not to use the previous image, use the updated image and deploy the updated image only
                 kubectl apply -f kubernetes-deployment.yaml
-                kubectl set image deployment/$DEPLOYMENT_NAME $DEPLOYMENT_NAME=$IMAGE:$GITHUB_SHA
+                kubectl set image deployment/$DEPLOYMENT_NAME mlops-app=$IMAGE:$GITHUB_SHA
